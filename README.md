@@ -1,2 +1,13 @@
 # BICHE
-An AI to play Ultimate Chicken Horse
+She is an AI to play Ultimate Chicken Horse
+
+
+So the comments are in french but for now if
+you have questions you can ask me. This is to play easy level that I built myself in challenge mode using the sheep in Ultimate Chicken Horse. The game needs to be in windowed mode and you need to have 1920 x 1080 res on your main screen. The code is all in one code because why not, but I will clean it up in due time.
+
+RIGHT NOW IT DOESN'T PICKLE WHAT IT HAS LEARNED
+
+Also, I haven't finished tweeking the reward system.
+
+
+Enjoy!
