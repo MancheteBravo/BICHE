@@ -1,5 +1,5 @@
 # BICHE
-She is an AI to play Ultimate Chicken Horse
+She is an AI that can play Ultimate Chicken Horse
 
 
 So the comments are in french but for now if
