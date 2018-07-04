@@ -5,6 +5,11 @@ MUST BE IN CHALLENGE
 MUST PLAY THE SHEEP CARACTER
 MUST BE IN WINDOWED 1920 x 1080 resolution
 MUST BE PATIENT as it runs on you CPU right now
+
+THIS IS A DQN Algorithm using only the screen's input and playing one of 8 possible moves allowed to BICHE.
+This is a frankenstein algorithm based on the DQN tutorial on the pytorch website that plays cartpole using only the screen inputs,
+the keras AI that plays flappy birds, SethBling's mari/o and mariflow alroithms and SerpentAI's magnificent framework.
+
 @author: EDOUARD DESJARDINS
 """
 #import pyscreenshot as ImageGrab
@@ -29,6 +34,9 @@ import matplotlib.pyplot as plt
 """
 I believe that you could put a dtype = cuda call here to change all tensors of your GPU
 """
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")    
+
 
 ################ TO CONTROLE THE MOUSE BUTTONS ################
 
@@ -276,7 +284,7 @@ def release(*args):
            win32api.keybd_event(VK_CODE[i],0 ,win32con.KEYEVENTF_KEYUP ,0)
 
 """
-EXAMPLE of a function taht would automatically strat the game and go
+EXAMPLE of a function that would automatically strat the game and go
 in the stage for you. It is not necessary anymore but it is fun to have
 """
 def startGame():
@@ -401,124 +409,77 @@ def wallJumpGauche():
 actions = [bougeGauche, bougeDroite, runGauche, runDroite, jump, jumpDroit, jumpGauche, dance]
 
 
-########### pour avoir al référence de quand une partie est finies #############
+"""
+OK so this image extracted as image_ref is actually a reference image of what the screen looks like 
+when you win. She needs it to compare every frame she sees with it (actually, just the section where the sheep appears 
+on the end game screen) and see if she has finished the level and won or lost.
+"""
 
-#image_ref_test = torch.load('C:\\Users\\Edouard\\Dropbox\\Python Scripts\\reference__1529537989-win.pt')  #### BUREAU
 
-image_ref = torch.load('C:\\Users\\User\\Dropbox\\Python Scripts\\reference__1529885704_this_win.pt') ## MAISON
+
+image_ref = torch.load('C:\\Users\\User\\Dropbox\\Python Scripts\\reference__1529885704_this_win.pt') 
+
+### choose the section of the image she will look at to see if she is finished ####
 
 image_ref_fin = torch.split(image_ref,10,dim=0)
 image_ref_fin = image_ref_fin[2]
 image_ref_fin = torch.split(image_ref_fin,5,dim=1)
 image_ref_fin = image_ref_fin[4]
 
+### choose the section of the image she will look at to see if she has won ####
+
 image_ref_win = torch.split(image_ref,5,dim=0)
 image_ref_win = image_ref_win[4]
 image_ref_win = torch.split(image_ref_win,4,dim=1)
 image_ref_win = image_ref_win[3]
 
-"""
-PLAY BUT NO BRAIN
-"""
-#
-#def play():
-#    random_move_position = random.randint(0,8)
-#    move = actions[random_move_position]()
-#    
-#    
-#    return move
-    ### pendant qu'il peut continuer a jouer, il joue
-         ### choisi une action au hasard
-         ### si meurt, fait le click click et recommence à jouer
-##
-##    
-#number_of_moves = 0
-#mousePos((816,656))
-#leftClick()
-#time.sleep(0.1)
-#
-#while number_of_moves < 2000:
-#    
-#    play()
-#    x1 = grab()
-#    x2 = torch.split(x1,10,dim=0)
-#    x2=x2[8]
-#    x2 = torch.split(x2,50,dim=1)
-#    x2=x2[1]
-##    time.sleep(9)
-#
-#    
-#    if torch.ByteTensor.all(torch.eq(x2,image_ref_test)) == True :
-#           
-#        print ('YOU DIED OR YOU WON')
-#        time.sleep(8)
-#        mousePos((434,246))
-#        leftClick() 
-#        time.sleep(.1)
-#        mousePos((434,246))
-#        leftClick()
-#        time.sleep(.1)
-#        continue
-#    number_of_moves+= 1
-#    
-#    
-    
-  # set up matplotlib
-#is_ipython = 'inline' in matplotlib.get_backend()
-#if is_ipython:
-#    from IPython import display
-#
-#plt.ion()
-#  
 
-    
-    
-    
-######################## NEURONES #################################
-
-       
+######################## NEURAL NETWORK A.K.A. HER BRAIN #################################
 """
-sur quoi tu le fait rouler, cpu ou gpu
-"""
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")        
-        
-        
+this selects the transitons which is a move and associates it a initial state(etat_init), the move action she did (action), 
+the next state she's in (etat_final) and the reward associated with the move (reward).
+"""       
 Transition = namedtuple('Transition', 
-                        ('etat_init','move','etat_final','reward')) #représente une action et son nanane à la fin
+                        ('etat_init','move','etat_final','reward')) 
+
 
 """
-ce qui suit est un buffer cyclique permettant de retenir les transitions récentes. Il a aussi une fonction .sample() pour 
-sélectionner une batch random de transitions pour le training ce qui stabilise l'algorithme DQN
+What follows is a cyclic buffer that allows her to remember transitions that she did previously. the .sample() function
+help select a RANDOM batch of previous move to learn with since this helps strenghten the DQN algorithm
+
 """
 
 class ReplayMemory(object):
 
     def __init__(self, capacity):
-        self.capacity = capacity #le max qui peut rentrer dans la mémoire??
-        self.memory=[] #initialise un ensemble vide pour contenir la mémoire
-        self.position = 0  #iniitialise la mémoire au point 0
+        self.capacity = capacity #maximum capacity of her memory
+        self.memory=[] #initialise an empty ensemble to contain this memory
+        self.position = 0  #initialise at position 0, so first memory
         
     def push(self, *args):
-        """ Sauvegarde une transition """
-        if len(self.memory) < self.capacity: #si il reste de la place dans sa mémoire
-            self.memory.append(None) #rajout une mémoire vide
-#        print('save')
-        self.memory[self.position] = Transition(*args) #sauvegarde la transition dans la mémoire au point position
-        self.position = (self.position + 1) % self.capacity # augmente la mposition de la mémorie tant qu,il reste d ela place ??
+        """ Saves a transition """
+        if len(self.memory) < self.capacity: #If there is room in the memory
+            self.memory.append(None) #add an empty memory
+        self.memory[self.position] = Transition(*args) #fill it with the corresponding transition namedtuple seen at line 442
+        self.position = (self.position + 1) % self.capacity # move up one memory spot and see if there is still room 
         
-    def sample(self, batch_size): ###pour prendre une batch random de mémoires
-        return random.sample(self.memory, batch_size)##prend des trucs random dans memory selon la taille de batch size
+    def sample(self, batch_size): ###To take a random batch of memories according to the batch_size variable determined later
+        return random.sample(self.memory, batch_size)
     
-    def __len__(self):    #### pour savoir al taille dece qu'il y aa en mémoire.
+    def __len__(self):    #### to see the size of the memory
         return len(self.memory)
  
 
        
 
 """
-Ce qui suit est le cerveau ou le réseau de neuronnes
-on veut quelques 
+THIS is the neural network. It has 3 convoluted layers taking 1 input which is the image and one dense (linear)
+layer that finishes with the 9 possible ouptupts with a weigh value added to it. She will use the value with the higest score.
+Batchnorm normalises the output of every convoluted layer to minimise calculations. We then use ReLU activation function 
+for they are easier to compute, specially if you have a shitty PC like me. This activation function 
+computes the weight of every transitions used (connections between nodes). some back propagation of this will occur further down
+Note that the matrixes (yeah yeah i know i should use the word tensors but screw it)
+need to have matching dimensions. Because linear algebra man.
 """     
 
 class Brain(nn.Module):
@@ -536,10 +497,7 @@ class Brain(nn.Module):
         self.output = nn.Linear(448, 8)
         
     def forward(self,x):
-        """
-        ici on fait passer les nodes dans une fonction (sigmoid ou dans ce cas ci relu) 
-        afin d'obtenire les poids pour chacune des transitions
-        """
+
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x))) 
@@ -548,165 +506,173 @@ class Brain(nn.Module):
 
    
 """
-Les yeux de l'algorithme qui transpose l'image  x,y en tensor[y,x]
-tu le mets en noir et blanc, tu réduit la résolution, tu le sauvegarde ne matrice puit en tenseur
+The eyes of BICHE where the image becomes  x,y in tensor[y,x]
+it becomes black and white, the resolution is completey dimed down and normalized.
+You end up with a tensor  of 1x40x80 with values between 0 and 1, 0 being black and 1 being white.
+This is how she sees
 
-SERAIT-CE mieux de mettre le tenseur en vecteur??  on verra
 """
 
-def grab(show = False):
+def grab(show = False, save = False, png = False):
 
     im = ImageOps.grayscale(ImageGrab.grab())
     im = ImageOps.fit(im,(80,40))
     if show == True:
-        im.show() ########## pour la voir
+        im.show() ########## just in case you want to slow down everything, you can input show=True
     a=skimage.img_as_float(im)
     a=np.float32(a)
     pytorch_frame = torch.FloatTensor(torch.from_numpy(a))
-    ##### pour sauvegardé le tenseur pour des références
-#    torch.save(pytorch_frame,os.getcwd() + '\\reference__' + str(int(time.time())) +'.pt') 
-    #### pour sauvegarder en png
-#    im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) +'.png', 'PNG') 
+    ##### To save your own reference image as seen on line 420
+    if save == True:
+        torch.save(pytorch_frame,os.getcwd() + '\\reference__' + str(int(time.time())) +'.pt') 
+    #### To save it as a png
+    if png == True:
+        im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) +'.png', 'PNG') 
 
-    return pytorch_frame.unsqueeze(0).to(device)## question de format
+    return pytorch_frame.unsqueeze(0).to(device)## formating
 
-BATCH_SIZE = 128   ### nombre de mémoire a processer en même temps
-gamma = 0.999  ## dans l'équation
-eps_start = 0.9  ### LA PLAGE DE VARIATION DE EPSILON QUI VAUT ENTRE 0 ET 1
+BATCH_SIZE = 128   ### amount of memories she will look back to learn (YOU CAN PLAY WITH THIS VALUE)
+"""
+constants used in the exponential decay for exploration vs exploitation. The more she makes moves, the more likely 
+she will used a learned move vs a completely random move. YOU CAN PLAY WITH THIS VALUE
+"""
+
+gamma = 0.999  
+eps_start = 0.9  
 eps_end = 0.05
 eps_decay = 15000
 target_update = 10
 
 """
-fait aller le cerveau policy_net et target_net sont le cerveau (nn.Module) en 2 modes différents
+2 instances of the brain. Policy is the one that works and target is the one that learns. Note that i used the same 
+variable names as the pytorch tutorial
 
 """
 policy_net = Brain().to(device)
 target_net = Brain().to(device)
-target_net.load_state_dict(policy_net.state_dict()) ##### copie les parametres et buffer de state_dict dans ce module et ses déscendant
+target_net.load_state_dict(policy_net.state_dict()) 
+##### this copies the parameters and buffers extracted with the state_dict function from policy instance to target instance
+##### it is the next generation of the brain
 
-target_net.eval() ## se met en mode evaluation pour certains parametres
 
+target_net.eval() ## She evaluates these parameters
+
+#### she optimises and looks in the memory, this potimiser will be seen later in the code
 optimizer = optim.RMSprop(policy_net.parameters())
 memory = ReplayMemory(10000)
 
 
 """
-c'est ici qu'il va choisir si il fait un move selon ce qu'il a appris ou un move random (EPSILON) 
-c'est une exponentielle décroissante au taux de eps-decay explore vs exploit
+HERE is where she chooses is she does a new move or an old move acording to a decaying exponential. 
+If the random number is higher, she does a learned move, if not, she does a random move.
 """
-number_of_moves = 0 ## compteur de nombre de moves
+number_of_moves = 0 ## move counter
 
 def select_move(etat_init):
     global number_of_moves
-    sample = random.random() ##un chiffre aléatoire entre 0 et 1
+    sample = random.random() ##random nuber between 0 et 1
     eps_threshold = eps_end + (eps_start - eps_end) * \
         math.exp(-1.* number_of_moves/eps_decay) ## exponentielle
     number_of_moves += 1
-    if sample > eps_threshold: #### test pour voir si on fait un nouveau move ou si on garde un vieux
-        with torch.no_grad(): ### pas de gradient alors pas de réciprocité arrière dans le réseau SAUVED E LA MÉMOIRE JE MEN CRIS STU
+    if sample > eps_threshold: 
+        with torch.no_grad(): ### if you are wondering what this does, it just calculates the move it would do (learned) but it doesn,t calculate the gradient, which will not back propagate in the neural network
             print('OLD MOVE')
             return policy_net(etat_init).max(1)[1]
-#            return torch.tensor(([[3]]), device = device, dtype=torch.long) #### pas trop sur ?????????? 
+
  
     else:
         print('NEW MOVE')
-        return torch.tensor(([[random.randrange(7)]]), device = device, dtype=torch.long) #### fait un move random
+        return torch.tensor(([[random.randrange(7)]]), device = device, dtype=torch.long) #### make a random move
 
 
 
 """
-MAINTENANT on entraine le AI
+Here we train her. 
+She looks at the data provided by each step (move she makes), she puts the data in the right format, she calculates the Q state she's in
+and the next one and she calculates the error between the expect Q states value and the real one observed. To have a clearer view of this algorithm, 
+google DQN, you should be fine
 
-ici il regarde les donné de chaques pas, il les met en dans le bon format, il fait le calcul des Q pour le pas 
-où il est et le pas suivant et il calcul l'erreur entre le pas suivant attendu et le pas suivant réel
 """
 
 
 
 def optimize_model():
-    if len(memory) < BATCH_SIZE: #### des fonction dans la mémorie
+    if len(memory) < BATCH_SIZE: #### if not enough moves in the memory yet, calm down and keep playing
         return
     transitions = memory.sample(BATCH_SIZE)
-#    print(transitions)
-    ########### transpose la batch avec zip et les mets ensemble chaque catégories! (verified)
+    ########### this transposes the transition saved so has to match the size of the matrixestensorzzzz
     batch = Transition(*zip(*transitions))
-#    print(batch)
-
-    ###### compute un masque d'état non finaux et plug les tenseurs en batch bout à bout (concatenate)
+    ###### COmpute the mask and concatenate the tensor(puts it back to back instead of stacked)
     
     non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.etat_final)), device=device, dtype=torch.uint8)
     non_final_mask = torch.cat((non_final_mask,non_final_mask,non_final_mask),0)
-#    print(non_final_mask) ####### check si y'a des datas alors met un 1
-    non_final_etat_final = torch.cat([s for s in batch.etat_final if s is not None]) ### met tout bout a bout
-#    print(non_final_etat_final.size())
-#    print(non_final_etat_final) #### met les états finaux bout a bout
-    ####### met les états en lignes pris de Transition ligne 629
-    
-    etat_init_batch = torch.cat(batch.etat_init) ### les splits selon la catédorie
+    non_final_etat_final = torch.cat([s for s in batch.etat_final if s is not None])
+    etat_init_batch = torch.cat(batch.etat_init) ### split the tesnors transition according to their category
 
     reward_batch = torch.cat(batch.reward)
 
 
-    #### calcule Q(s_t,a) - le model calule Q(s_t) et après on choisi la colonne des moves
+    #### calculate Q(s_t,a) - the model's Q(s_t) and then choose the move column
 
     etat_init_action_value = policy_net(etat_init_batch)
 
-    #### calcule V(s_(t+1)) pour tous les états suivant
-    etat_final_values = torch.zeros(BATCH_SIZE*3, device = device)
-    etat_final_values[non_final_mask] = target_net(non_final_etat_final).max(1)[0].detach() ### detach clear la mémoire
+    #### calculate V(s_(t+1)) for subsequent states
+    etat_final_values = torch.zeros(BATCH_SIZE*3, device = device) ## so this part is just to stack three inputs together for matching the sizes
+    etat_final_values[non_final_mask] = target_net(non_final_etat_final).max(1)[0].detach() ### detach clears the memory
     etat_final_values = etat_final_values[0:BATCH_SIZE]
-    ##### avec les V, trouve les valeur de Q attendu au pprochain pas
+    ##### with V, find Q expected at the next step
     expected_etat_init_action_value = (etat_final_values*gamma) + reward_batch
 
     etat_init_action_value=etat_init_action_value[0:BATCH_SIZE].max(1)
-    #### CAlcule l'erreur (loss function mais selon Huber loss un peu comme squared mean error mais linéaire a grande erreur
+    #### calculate the error using Huber error which is like squared mean error but with less weight given to outliers
 
     
-    etat_init_action_value = etat_init_action_value[1].float()
-    
+    etat_init_action_value = etat_init_action_value[1].float() 
     expected_etat_init_action_value = expected_etat_init_action_value.float()
-    
-#    loss = F.smooth_l1_loss(etat_init_action_value,expected_etat_init_action_value.unsqueeze(1))#unsqueeze pour els dimensions
-    loss = F.smooth_l1_loss(etat_init_action_value,expected_etat_init_action_value)
-    
+    loss = F.smooth_l1_loss(etat_init_action_value,expected_etat_init_action_value)    
     loss = torch.autograd.variable(loss, requires_grad =True) ### besoin d'UN GRADIENT
 
-
-    ### optimize le model (fait varier les poid par gradientdescent(les deltas selon la fonction functionnelle))
+    """
+    this next part optimizes the model by backl propagation of the gradients. It changes the weight of
+    every neural network connections implicated in the move selection to make it more likely if the reward is positive or
+    less likely if the reward is negative.
+    """
     optimizer.zero_grad()
-    loss.backward() ##########  no grad param here nut whyyyyyyyyy
-    
+    loss.backward() 
     torch.nn.utils.clip_grad_norm(policy_net.parameters(),1)
     optimizer.step()
     
 
-nombre_episode = 2000 #### nombre d'épisode
+nombre_episode = 2000 #### number of GAMES PLAYED
 data = []
     
 for i_episode in range(nombre_episode):
     print('episode =  ' + str(i_episode))
-   ## il est en train de jouer
-    finished_episode = False
-    ## click sur le screen
+    finished_episode = False ### this variable says if she is playing or not. it changes if it sees the end game screen as extracted at line 420
+    ## click on the screen because you are in windowed mode and every time you will start the algorithm it has to press back with the mose on the screen
     mousePos((816,656))
     leftClick()
     time.sleep(0.1)
     
-     ###### check le jeux (ca donne des tenseurs)
+     ###### look at the game BICHE! with your beautiful brown eyes
 
     etat_init = grab()
     etat_init = etat_init.reshape(1,1,etat_init.shape[1],etat_init.shape[2])
     etat_init = torch.cat((etat_init,etat_init,etat_init),0)
 
     bonus_right = 0
-    for t in count(): #compte jusqu'a ce que la partie finisse je crois
+    for t in count(): #number of moves done in the episode
         ########## fait une action
         action = select_move(etat_init)
         action = action[0]
         move_number=action.item()
-        move = actions[move_number]() ###pour prendre juste le chiffre et pas la structure tensorielle
-
+        move = actions[move_number]() ## this is to take just the position of the move in the action list instead of the name of the move (line 409)
+"""
+this part is to explain to her that she need to go right. so choose a level where she has to go right only
+These values need to be tweeked. If the time bias is too strong, she will kill herself willingly quickly so it is less penalising the trying the level.
+If going right is too rewarding, she will stick her stupid head on a wall and move right a million times before finishing the level
+Soooo yeah....
+"""
         if move_number == (5):
             bonus_right += 0.1
         if move_number in (1,3):
@@ -714,30 +680,29 @@ for i_episode in range(nombre_episode):
         if move_number in (0,2,6):
             bonus_right -= 0.05
             
-        time_bias = t/500### pour factor in le temps que ça prend de faire le level
-        reward = 0. + bonus_right ###### A CHAQUE MOVE AjOUTE UN ZERO DANS REWARD plus son bonus séquentiel!!
+        time_bias = t/500 ### THIS IS THE TIME FACTOR WHICH PENALISES HER FOR TAKING TOO LONG, this needs to be tweeked
+        reward = 0. + bonus_right ###### Every move you had the bonus for goign right and malus for going left
         print(reward)
         reward = torch.tensor([reward], device=device)
 
-        ######## observe le nouvel état
+        ######## observe lthe new state
 
         next_screen = grab()
-        next_screen = next_screen.reshape(1,1,next_screen.shape[1],next_screen.shape[2])
+        next_screen = next_screen.reshape(1,1,next_screen.shape[1],next_screen.shape[2])## to match tensor sizes (this algorithm uses 3x1x40x80 inputs)
         next_screen = torch.cat((next_screen,next_screen,next_screen),0)
         test_screen = grab()
-        #### check si c'est le screen de fin
+        #### Look if theepisode is finished
 
         verify_if_stopped = torch.split(test_screen,10,dim=1)
         verify_if_stopped = verify_if_stopped[2]
         verify_if_stopped = torch.split(verify_if_stopped,5,dim=2)
         verify_if_stopped = verify_if_stopped[4]
         
-        ############condition sur la fin du jeux
 
-        if torch.ByteTensor.all(torch.eq(verify_if_stopped,image_ref_fin)) == True :
+
+        if torch.ByteTensor.all(torch.eq(verify_if_stopped,image_ref_fin)) == True : ## if it matches the end screen
            
 
-                
             time.sleep(6)
             test_screen = grab()
             verify_if_won = torch.split(test_screen,5,dim=1)
@@ -745,7 +710,7 @@ for i_episode in range(nombre_episode):
             verify_if_won = torch.split(verify_if_won,4,dim=2)
             verify_if_won = verify_if_won[3]
 
-            ############### prend image référence de gagner et compare
+            ############### Take ref image and compare
             
             finished_episode = True
             
@@ -759,7 +724,7 @@ for i_episode in range(nombre_episode):
                 print('LOSE')
 
             time.sleep(4)
-            mousePos((434,246))
+            mousePos((434,246))### these positions are to click on the RETRY button top left, you might have to modify these values using get_cords() line 85)
             leftClick() 
             time.sleep(.5)
             mousePos((434,246))
@@ -774,33 +739,40 @@ for i_episode in range(nombre_episode):
         elif finished_episode == True:
             etat_final = None
 
-        else :
+        else : ## this is just in case something is incredibly wrong, the code should never go here
             print('Probleme chum')
             etat_final = None
                 
         if finished_episode == True:
             data.append((i_episode,reward.item(),time_bias,t+1))
-            print(data[i_episode])
+            print(data[i_episode]) 
+            ### ok so data saves all the info on the run. But it is just a variable. WHEN YOU FINISH' YOU NEED TO MANUALLY
+            ### SAVE THIS OR ELSE YOU WILL HAVE DONE EVERYTHING FOR NOTHING. I should save it automatically and write a .txt file
+            ### as it progresses. soon
 
             break
-    
+    """
+    so if the episode is not finished, she keeps going.
+    She puts the moves/reward in her memory, she makes the new screen she saw the old screen, she optimizes (back scattering the gradients)
+    and she does it all over again
+    """
 
-            ##### store dans la mémoire
+            ##### storage in the memory
         memory.push(etat_init,action,etat_final,reward)
-            ##### bouge au prochain etat dans sa tête
+            ##### next move
         etat_init = etat_final
 
-            #### fait un pas d'optimisation
+            #### optimise
         optimize_model()
 
-            #### si la partie est fini, sort la duration de l'épisode
+
     
             
-            #### updtae le reseau de neuronne target
+            #### updtae the neural network after a couple of time (like an autosave of the nn)
     if i_episode % target_update == 0:
             target_net.load_state_dict(policy_net.state_dict())
             print('YOU LEARNDED')
             
             
-print('FENI')        
+print('FINISHED')        
 
