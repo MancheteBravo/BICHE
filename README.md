@@ -9,6 +9,8 @@ THIS IS A DQN Algorithm using only the screen's input and playing one of 8 possi
 This is a frankenstein algorithm based on the DQN tutorial on the pytorch website that plays cartpole using only the screen inputs,
 the keras AI that plays flappy birds, SethBling's mari/o and mariflow alroithms and SerpentAI's magnificent framework.
 
+When I wanted to try this, I found a lot of tutorials assumed that you knew a lot more than you actulally do. The object here is to try to be as transparent as I can be. If you have any questions or commentaries please feel free to communicate with me.
+
 RIGHT NOW IT DOESN'T PICKLE WHAT IT HAS LEARNED
 
 Also, I haven't finished tweeking the reward system.
