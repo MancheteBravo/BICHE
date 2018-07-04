@@ -6,9 +6,12 @@ MUST PLAY THE SHEEP CARACTER
 MUST BE IN WINDOWED 1920 x 1080 resolution
 MUST BE PATIENT as it runs on you CPU right now
 
-THIS IS A DQN Algorithm using only the screen's input and playing one of 8 possible moves allowed to BICHE.
-This is a frankenstein algorithm based on the DQN tutorial on the pytorch website that plays cartpole using only the screen inputs,
-the keras AI that plays flappy birds, SethBling's mari/o and mariflow alroithms and SerpentAI's magnificent framework.
+THIS IS A DQN Algorithm using only the screen's input and playing one of 9 possible moves allowed for BICHE.
+This is a frankenstein algorithm based on the DQN tutorial on the pytorch website that plays cartpole using only the screen inputs
+(https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html),
+the keras AI that plays flappy birds by Ben Lau (https://yanpanlau.github.io/2016/07/10/FlappyBird-Keras.html), 
+SethBling's mari/o and mariflow alroithms (https://www.youtube.com/channel/UC8aG3LDTDwNR1UQhSn9uVrw)
+and SerpentAI's magnificent framework(https://github.com/SerpentAI, http://serpent.ai/).
 
 @author: EDOUARD DESJARDINS
 """
