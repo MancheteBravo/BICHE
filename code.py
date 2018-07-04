@@ -2,7 +2,9 @@
 Created on Sun Jun 17 15:25:28 2018
 PLAY ULTIMATE CHICKEN HORSE
 MUST BE IN CHALLENGE
-
+MUST PLAY THE SHEEP CARACTER
+MUST BE IN WINDOWED 1920 x 1080 resolution
+MUST BE PATIENT as it runs on you CPU right now
 @author: EDOUARD DESJARDINS
 """
 #import pyscreenshot as ImageGrab
@@ -24,53 +26,59 @@ import math
 import matplotlib
 import matplotlib.pyplot as plt
 
+"""
+I believe that you could put a dtype = cuda call here to change all tensors of your GPU
+"""
+
+################ TO CONTROLE THE MOUSE BUTTONS ################
 
 
-################ pour contrôler la souris ################
-
-## juste un click normal GAUCHE
 def leftClick():
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0)
     time.sleep(.1)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
-    print ('LEFT CLICK TABARNAK')
-    ## tient la souris enfoncé
+    print ('LEFT CLICK')
+
 def leftDOwn():
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0)
     time.sleep(.1)
-    print ('TIENS LE PITON GAUCHE DE LA SOURIS')
-    ## lache le piton de gauche
+    print ('HOLD LEFT CLICK')
+
 def leftUp():
      win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
      time.sleep(.1)
-     print ('LÄCHE LE PITON GAUCHE DE LA SOURIS')
+     print ('RELEASE LEFT CLICK')
      
-## juste un click normal DROIT
+
 def rightClick():
     win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN,0,0)
     time.sleep(.1)
     win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP,0,0)
-    print ('RIGHT CLICK TABARNAK')
-    ## tient la souris enfoncé
+    print ('RIGHT CLICK')
+
 def rightDOwn():
     win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN,0,0)
     time.sleep(.1)
-    print ('TIENS LE PITON DROIT DE LA SOURIS')
-    ## lache le piton de gauche
+    print ('HOLD RIGHT CLICK')
+
 def rightUp():
      win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP,0,0)
      time.sleep(.1)
-     print ('LÄCHE LE PITON DROIT DE LA SOURIS')
+     print ('RELEASE RIGHT CLICK')
 
-########## MOUVEMENT DE SOURIS ####
+########## MOUSE MOUVEMENTS #######################
+
+##### use this to put the mouse somewhere on the screen before doing a action ####
 def mousePos(cord):
     win32api.SetCursorPos((cord[0], cord[1]))
-     
+    
+###### use this to get the numbered coordinates of the pixels where the mouse is at the moment this is used #####
+
 def get_cords():
     x,y = win32api.GetCursorPos()
     print (x,y)
     
-################ CLAVIER #####################
+################ KEYBOARD- ALL BUTTONS AND A FUNCTION TO CALL THEM EASILY #####################
     #Giant dictonary to hold key name and VK value
 VK_CODE = {'backspace':0x08,
            'tab':0x09,
@@ -267,8 +275,10 @@ def release(*args):
     for i in args:
            win32api.keybd_event(VK_CODE[i],0 ,win32con.KEYEVENTF_KEYUP ,0)
 
-
-############### POUR PARTIR LE JEUX ##############
+"""
+EXAMPLE of a function taht would automatically strat the game and go
+in the stage for you. It is not necessary anymore but it is fun to have
+"""
 def startGame():
     #Premier click
     mousePos((816,656))
@@ -310,93 +320,67 @@ def startGame():
     release('a')
     print('STOP ALLER A GAUCHE')
     
-##################### ACTION LIST ######################################
+"""
+This section defines every possible move used in the game. Yes they are in french
+but you just need to know that gauche means left and droite means right. Free french lesson
+in bonus! The tiempo variable is to determine how long she presses the buttons. You can ajust this.
+"""
 tiempo = 0.3
 def bougeGauche():
-#    mousePos((816,656))
-#    leftClick()r
-#    time.sleep(0.1)
     pressAndHold('a')
     time.sleep(tiempo)
     release('a')
     print('ALLER A GAUCHE')
     
 def bougeDroite():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1) 
     pressAndHold('d')
     time.sleep(tiempo*2)
     release('d')
     print('ALLER A DROITE')
     
 def runGauche():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('a','shift')
     time.sleep(tiempo)
     release('a','shift')
     print('RUN A GAUCHE')
     
 def runDroite():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('d','shift')
     time.sleep(tiempo*2)
     release('d','shift')
     print('RUN A DROITE')
     
 def jump():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('spacebar')
     time.sleep(tiempo)
     release('spacebar')
     print('SAUTE')
     
 def jumpDroit():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('spacebar', 'd')
     time.sleep(tiempo*2)
     release('spacebar','d')
     print('SAUTE A DROITE')
     
 def jumpGauche():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('spacebar', 'a')
     time.sleep(tiempo)
     release('spacebar','a')
     print('SAUTE A GAUCHE')
     
 def crouch():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('s')
     time.sleep(tiempo)
     release('s')
     print('CROUCH')
     
 def dance():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('r')
     time.sleep(tiempo)
     release('r')
     print('DANCE')
     
 def wallJumpDroite():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1)
     pressAndHold('d')
     press('spacebar')
     time.sleep(tiempo)
@@ -404,9 +388,6 @@ def wallJumpDroite():
     print('WALL JUMP on RIGHT WALL')
     
 def wallJumpGauche():
-#    mousePos((816,656))
-#    leftClick()
-#    time.sleep(0.1) 
     pressAndHold('w')
     press('spacebar')
     time.sleep(tiempo)
@@ -414,7 +395,7 @@ def wallJumpGauche():
     print('WALL JUMP on LEFT WALL')
     
     
-#################### fait un move random ###########
+#################### THIS IS THE LIST OF ACTIONS SHE WILL  BE ABLE TO DO ###########
     
     
 actions = [bougeGauche, bougeDroite, runGauche, runDroite, jump, jumpDroit, jumpGauche, dance]
