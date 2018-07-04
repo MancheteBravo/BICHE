@@ -13,6 +13,10 @@ the keras AI that plays flappy birds by Ben Lau (https://yanpanlau.github.io/201
 SethBling's mari/o and mariflow alroithms (https://www.youtube.com/channel/UC8aG3LDTDwNR1UQhSn9uVrw)
 and SerpentAI's magnificent framework(https://github.com/SerpentAI, http://serpent.ai/).
 
+
+What you need to do is be art the start of the level with the waiting screen that asks you to press spacebar to start your run. 
+Start the program and it should run until you kill it or until the number of episodes have been accomplished. 
+REMEMBER THAT THE DATA DOES NOT SAVE AUTOMATICALLY. You need to save the variable 'data' manually at the end of the whole run.
 @author: EDOUARD DESJARDINS
 """
 
