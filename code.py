@@ -15,7 +15,7 @@ and SerpentAI's magnificent framework(https://github.com/SerpentAI, http://serpe
 
 @author: EDOUARD DESJARDINS
 """
-#import pyscreenshot as ImageGrab
+
 import os
 import time
 import win32api, win32con
@@ -91,6 +91,7 @@ def get_cords():
     
 ################ KEYBOARD- ALL BUTTONS AND A FUNCTION TO CALL THEM EASILY #####################
     #Giant dictonary to hold key name and VK value
+    ## Here I used ChrisKiehl's wonderfull library (https://gist.github.com/chriskiehl/2906125)
 VK_CODE = {'backspace':0x08,
            'tab':0x09,
            'clear':0x0C,
